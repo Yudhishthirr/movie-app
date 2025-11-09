@@ -1,0 +1,3 @@
+$ npm run reset-project
+if you wsnt  more tabs you need to add file
+insde the tabs folfer

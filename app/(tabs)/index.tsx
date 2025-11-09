@@ -1,98 +1,209 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { icons } from "@/constants/icons";
+import {
+  korean1, korean2, korean3, korean4, korean5, post1, post2, post3,
+  post4, poster1, poster2, poster3, poster4
+} from "@/utils/myposter";
+import { useRouter } from "expo-router";
+import { Dimensions, FlatList, Image, ImageSourcePropType, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import "../global.css";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width * 0.35;
+const CARD_MARGIN = 12;
 
-export default function HomeScreen() {
+// Sample data for movies/shows - replace with real data later
+const trendingMovies = [
+  { id: 1, title: "The Glory", poster: poster1 },
+  { id: 2, title: "Arcane", poster:poster4 },
+  { id: 3, title: "Peaky Blinders", poster:poster2 },
+  { id: 4, title: "Movie 4", poster:poster3  },
+  { id: 5, title: "Movie 5", poster:poster4  },
+];
+
+const series = [
+  { id: 1, title: "Breaking Bad", poster:post1, },
+  { id: 2, title: "You", poster:post4, },
+  { id: 3, title: "Narcos", poster: post3, },
+  { id: 4, title: "Series 4", poster: post2, },
+  { id: 5, title: "Series 5", poster: post1, },
+];
+
+const koreanDramas = [
+  { id: 1, title: "Drama 1", poster: korean1 },
+  { id: 2, title: "Drama 2", poster: korean2 },
+  { id: 3, title: "Drama 3", poster: korean3 },
+  { id: 4, title: "Drama 4", poster: korean4 },
+  { id: 5, title: "Drama 5", poster: korean5 },
+];
+
+interface MovieCardProps {
+  item: { id: number; title: string; poster: string | ImageSourcePropType };
+}
+
+const MovieCard = ({ item }: MovieCardProps) => {
+  const router = useRouter();
+  
+  // Handle both local images (ImageSourcePropType) and remote URLs (string)
+  const imageSource = typeof item.poster === "string" 
+    ? { uri: item.poster } 
+    : item.poster;
+
+  const handlePress = () => {
+    router.push(`/movies/${item.id}`);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <TouchableOpacity 
+      style={[styles.movieCard, { width: CARD_WIDTH, marginRight: CARD_MARGIN }]}
+      activeOpacity={0.8}
+      onPress={handlePress}
+    >
+      <Image
+        source={imageSource}
+        style={styles.posterImage}
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
+  );
+};
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+interface SectionProps {
+  title: string;
+  data: Array<{ id: number; title: string; poster: string | ImageSourcePropType }>;
+  onSeeAll?: () => void;
+}
+
+const Section = ({ title, data, onSeeAll }: SectionProps) => {
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <TouchableOpacity onPress={onSeeAll} activeOpacity={0.7}>
+          <Text style={styles.seeAllText}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={data}
+        renderItem={({ item }) => <MovieCard item={item} />}
+        keyExtractor={(item) => item.id.toString()}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalList}
+      />
+    </View>
+  );
+};
+
+export default function Index() {
+  return (
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity activeOpacity={0.7}>
+          <View style={styles.profileIcon}>
+            <Image 
+              source={icons.person} 
+              style={styles.headerIcon}
+              tintColor="#FFFFFF"
+            />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7}>
+          <Image 
+            source={icons.search} 
+            style={styles.headerIcon}
+            tintColor="#FFFFFF"
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Section 
+          title="Trending Now" 
+          data={trendingMovies}
+        />
+        <Section 
+          title="Series" 
+          data={series}
+        />
+        <Section 
+          title="Korean TV Drama" 
+          data={koreanDramas}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#000000",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#000000",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  profileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#1a1a1a",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  headerIcon: {
+    width: 24,
+    height: 24,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  seeAllText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    opacity: 0.8,
+  },
+  horizontalList: {
+    paddingHorizontal: 16,
+  },
+  movieCard: {
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#1a1a1a",
+  },
+  posterImage: {
+    width: "100%",
+    height: CARD_WIDTH * 1.5,
+    borderRadius: 8,
   },
 });
